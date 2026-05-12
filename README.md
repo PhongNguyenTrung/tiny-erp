@@ -1,8 +1,9 @@
 <div align="center">
 
-<img src="docs/assets/logo.svg" alt="tiny-erp logo" width="128" height="128" />
-
-# tiny-erp
+<h1>
+  <img src="docs/assets/logo.svg" alt="" width="64" height="64" align="center" valign="middle" />
+  &nbsp;tiny-erp
+</h1>
 
 **A modular ERP for tiny businesses — runs entirely on Google Apps Script.**
 

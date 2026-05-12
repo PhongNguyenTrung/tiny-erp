@@ -1,0 +1,33 @@
+# clasp credentials + project link (contains scriptId)
+.clasp.json
+.clasprc.json
+
+# Local secrets — Apps Script reads from Script Properties, not from disk.
+# Keep .env.example tracked, ignore any real .env.
+.env
+.env.local
+*.env
+
+# Node / build
+node_modules/
+*.log
+dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Personal artifacts users may keep locally but shouldn't publish.
+# Real customer data, internal drafts, etc.
+private/
+samples/private/
+*.private.*
+
+# Excel/Sheet exports — likely contain real customer data (names, phones, prices).
+# Track explicitly in a `samples/` folder after redacting if you want them in the repo.
+*.xlsx
+*.xls

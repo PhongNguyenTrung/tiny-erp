@@ -185,19 +185,19 @@ Cloud SQL bằng cách thay implement của `DB.table`.
 
 ## How to add a new ERP module
 
-Xem [CONTRIBUTING.md](CONTRIBUTING.md) cho step-by-step.
+Xem [guides/adding-a-module.md](../guides/adding-a-module.md) cho step-by-step.
 
 Tóm tắt:
 
 1. Tạo `src/modules/<your-module>/`
 2. Viết `<Entity>.js` — repository wrap `DB.table` (pure CRUD)
 3. Viết `<Entity>Commands.js` — bind Router với slash command / intent
-4. Add `<Entity>Commands.register()` vào `bootstrap()` ở [Code.js](src/Code.js)
+4. Add `<Entity>Commands.register()` vào `bootstrap()` ở [Code.js](../../src/Code.js)
 5. (Optional) `<Entity>Extractor.js` nếu cần AI bóc tách free text
 
 ## Security boundaries
 
-Tách rõ trong [SECURITY.md](SECURITY.md). Highlights:
+Tách rõ trong [SECURITY.md](../../SECURITY.md). Highlights:
 
 - **Webhook auth**: secret embedded in URL `?token=…` (Apps Script không
   expose HTTP headers cho doPost → không dùng được Telegram secret_token).
@@ -210,13 +210,17 @@ Tách rõ trong [SECURITY.md](SECURITY.md). Highlights:
 
 ## Trade-offs đã quyết định
 
-| Quyết định | Trade-off |
-|------------|-----------|
-| Apps Script flat global namespace | Đơn giản, không build step. Đổi lại: prefix-name everywhere, careful về collision. |
-| Sheet-as-DB thay Firestore | $0 + tự kiểm tra dữ liệu bằng tay được. Đổi lại: < 50k rows. |
-| Telegram primary, Zalo legacy | Telegram zero-requirement. Đổi lại: không có verified business identity. |
-| Webhook secret qua URL query | Apps Script không expose HTTP header. Đổi lại: secret xuất hiện trong Google edge logs (low risk vì server-to-server only). |
-| Gemini 2.5 Flash | Cheapest tier hỗ trợ multimodal. Đổi lại: token cost vẫn $0.x / 1k báo giá — chấp nhận được cho DN nhỏ. |
+Mỗi quyết định lớn được document đầy đủ trong [Architecture Decision Records (ADRs)](../adr/). Tóm tắt:
+
+| Quyết định | ADR | Trade-off |
+|---|---|---|
+| Runtime Google Apps Script | [ADR-0002](../adr/0002-use-google-apps-script-runtime.md) | $0, no server. Đổi lại: flat namespace, quota limits |
+| Sheets làm database | [ADR-0003](../adr/0003-sheets-as-database.md) | $0, owner-readable. Đổi lại: < 50k rows / table |
+| Telegram primary channel | [ADR-0004](../adr/0004-telegram-as-primary-channel.md) | Zero-requirement. Đổi lại: no verified business identity |
+| Gemini làm AI provider | [ADR-0005](../adr/0005-gemini-as-ai-provider.md) | Cheapest multimodal tier |
+| Webhook secret qua URL query | [ADR-0006](../adr/0006-webhook-secret-via-url-query.md) | Apps Script không expose HTTP header. Đổi lại: secret xuất hiện trong edge logs |
+| Modular Router pattern | [ADR-0007](../adr/0007-modular-router-pattern.md) | Plug-in module, swap adapter |
+| No build step (plain JS) | [ADR-0008](../adr/0008-no-build-step.md) | Đơn giản. Đổi lại: no TypeScript, no bundler |
 
 ## Roadmap (architecture-wise)
 

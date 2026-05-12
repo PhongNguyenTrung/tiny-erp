@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="docs/assets/logo.svg" alt="tiny-erp logo" width="128" height="128" />
+
 # tiny-erp
 
 **A modular ERP for tiny businesses — runs entirely on Google Apps Script.**
@@ -13,11 +15,29 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Status: MVP](https://img.shields.io/badge/status-MVP-orange)](#roadmap)
 
-[Quickstart](#quickstart) · [Modules](#modules) · [Architecture](ARCHITECTURE.md) · [Security](SECURITY.md) · [Contribute](CONTRIBUTING.md)
+[Quickstart](#quickstart) · [Modules](#modules) · [Documentation](#documentation) · [Architecture](docs/architecture/overview.md) · [Security](SECURITY.md) · [Contribute](CONTRIBUTING.md)
 
 </div>
 
 ---
+
+## Table of contents
+
+- [Why tiny-erp](#why-tiny-erp)
+- [Modules](#modules)
+- [Tech stack](#tech-stack)
+- [Quickstart](#quickstart)
+- [Slash commands](#slash-commands)
+- [Architecture](#architecture)
+- [Documentation](#documentation)
+- [Customization](#customization)
+- [Self-tests](#self-tests)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [Security](#security)
+- [Localization](#localization)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
 
 ## Why tiny-erp
 
@@ -45,7 +65,7 @@ Small businesses (workshops, print shops, repair stores, single-person traders) 
 | `payments` | roadmap | Advance + receivables tracking | — |
 | `reports` | roadmap | AI-summarized monthly / quarterly | — |
 
-Each module is a plug-in registered with a central `Router`. See [ARCHITECTURE.md](ARCHITECTURE.md) for the layering and [CONTRIBUTING.md](CONTRIBUTING.md) for how to add your own.
+Each module is a plug-in registered with a central `Router`. See [architecture overview](docs/architecture/overview.md) for the layering and the [adding-a-module guide](docs/guides/adding-a-module.md) for how to build your own.
 
 ## Tech stack
 
@@ -58,11 +78,13 @@ Each module is a plug-in registered with a central `Router`. See [ARCHITECTURE.m
 | Deploy | **[clasp](https://github.com/google/clasp)** | Single `push`, no build step |
 | Language | Plain JavaScript | Apps Script V8 — no TypeScript, no bundler |
 
-Zero open-source dependencies at runtime. Everything is free-tier or pennies-per-call.
+Zero open-source dependencies at runtime. Everything is free-tier or pennies-per-call. Rationale behind each choice lives in the [ADR log](docs/adr/).
 
 ## Quickstart
 
 > Read [SECURITY.md](SECURITY.md) first — the webhook is internet-reachable. Set `TELEGRAM_WEBHOOK_SECRET` and `TELEGRAM_ALLOWED_USER_IDS` before exposing it.
+
+A more detailed walkthrough (with screenshots and troubleshooting) lives in [docs/guides/quickstart.md](docs/guides/quickstart.md). The short version:
 
 ### Prerequisites
 
@@ -171,7 +193,22 @@ src/
 - `adapters/` may call `core/` only
 - `core/` is self-contained
 
-Full design and trade-offs: [ARCHITECTURE.md](ARCHITECTURE.md).
+Full design and trade-offs: [docs/architecture/overview.md](docs/architecture/overview.md).
+
+## Documentation
+
+All long-form documentation lives in [`docs/`](docs/):
+
+| Section | Purpose |
+|---|---|
+| [`docs/architecture/overview.md`](docs/architecture/overview.md) | System layering, folder map, data flow |
+| [`docs/adr/`](docs/adr/) | Architecture Decision Records — *why* each major choice was made |
+| [`docs/guides/quickstart.md`](docs/guides/quickstart.md) | End-to-end setup walkthrough (~20 min from clone to first PDF) |
+| [`docs/guides/adding-a-module.md`](docs/guides/adding-a-module.md) | Build your own ERP module (`orders` walkthrough, ~80 LOC) |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | Code style, module conventions, PR checklist |
+| [`SECURITY.md`](SECURITY.md) | Threat model + disclosure policy |
+
+Start with the [architecture overview](docs/architecture/overview.md) if you're reading the codebase, or the [quickstart guide](docs/guides/quickstart.md) if you just want it running.
 
 ## Customization
 
@@ -183,7 +220,7 @@ Full design and trade-offs: [ARCHITECTURE.md](ARCHITECTURE.md).
 | AI prompt | [`QuoteExtractor.js`](src/modules/quotes/QuoteExtractor.js) → `SYSTEM_PROMPT` |
 | Welcome message | [`QuoteCommands.js`](src/modules/quotes/QuoteCommands.js) → `_help` |
 | Bot's tone of voice | Translate / tune the strings in `*Commands.js` files |
-| Add a new module | See [CONTRIBUTING.md](CONTRIBUTING.md) — `Order` module walkthrough |
+| Add a new module | See [docs/guides/adding-a-module.md](docs/guides/adding-a-module.md) — `Order` module walkthrough |
 
 ## Self-tests
 
@@ -204,6 +241,7 @@ selftest_listGeminiModels  // discover model names your API key can access
 - [x] Telegram integration (inline keyboard, PDF blob upload)
 - [x] Security hardening (webhook secret, allowlist, sanitized logs)
 - [x] Modular ERP framework (Router, DB, plug-in modules)
+- [x] Architecture Decision Records ([docs/adr/](docs/adr/))
 - [ ] `orders` module — quote → order conversion with status
 - [ ] `invoices` module — generate from orders, email delivery
 - [ ] `payments` module — advances + receivables
@@ -214,7 +252,7 @@ selftest_listGeminiModels  // discover model names your API key can access
 
 ## Contributing
 
-Contributions welcome — especially **new modules**. Adding a module is ~50 lines of code following the [Order module walkthrough](CONTRIBUTING.md#adding-a-new-erp-module) in [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions welcome — especially **new modules**. Adding a module is ~50–80 lines of code following the [Order module walkthrough](docs/guides/adding-a-module.md).
 
 Good first issues:
 
@@ -223,7 +261,7 @@ Good first issues:
 - Add inline-keyboard pagination to `/khach list`
 - Write a `messenger` adapter
 
-By submitting code, you agree to license it under the [MIT License](LICENSE).
+By submitting code, you agree to license it under the [MIT License](LICENSE). See [CONTRIBUTING.md](CONTRIBUTING.md) for code style and PR conventions.
 
 ## Security
 

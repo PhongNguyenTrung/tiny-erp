@@ -64,3 +64,27 @@ function selftest_routerCommands() {
   bootstrap();
   Router.listCommands().forEach((c) => Logger.log('/' + c.name + ' — ' + (c.description || '')));
 }
+
+/**
+ * Verify Telegram token + webhook không gửi message thật. Trả về 3 thông tin:
+ *  - getMe (token hợp lệ → bot info)
+ *  - getWebhookInfo (URL hiện tại, pending_update_count, last_error)
+ *  - allowlist size + có secret hay chưa
+ *
+ * Chạy ngay sau setup_telegramWebhook() để xác nhận deploy ổn.
+ */
+function selftest_telegram() {
+  const me = TelegramAPI.getMe();
+  Logger.log('Bot: @' + (me.username || '?') + ' (id ' + me.id + ')');
+
+  const info = TelegramAPI.getWebhookInfo();
+  Logger.log('Webhook URL: ' + (info.url || '(empty)'));
+  Logger.log('Pending updates: ' + (info.pending_update_count || 0));
+  if (info.last_error_message) {
+    Logger.log('⚠ Last error: ' + info.last_error_message + ' at ' + new Date((info.last_error_date || 0) * 1000));
+  }
+
+  const allow = Config.allowedUserIds();
+  Logger.log('Allowlist: ' + (allow === null ? '(unset — open to anyone!)' : Object.keys(allow).length + ' user(s)'));
+  Logger.log('Webhook secret: ' + (Config.get('TELEGRAM_WEBHOOK_SECRET') ? 'set' : 'NOT set'));
+}

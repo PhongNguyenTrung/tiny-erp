@@ -57,11 +57,20 @@ function setup_telegramResetWebhook(url) {
 
 /**
  * Sinh random webhook secret, save vào Script Properties. Chạy 1 lần.
+ *
+ * Apps Script không expose Web Crypto. Dùng `Utilities.getUuid()` (UUIDv4
+ * sinh từ secure RNG của JVM) + HMAC-SHA256 với entropy bổ sung để mở rộng
+ * lên 256-bit. Đủ mạnh cho secret webhook một-người-dùng.
  */
 function setup_generateWebhookSecret() {
-  const bytes = [];
-  for (let i = 0; i < 32; i++) bytes.push(Math.floor(Math.random() * 256));
-  const secret = Utilities.base64EncodeWebSafe(bytes).replace(/=/g, '').substring(0, 48);
+  const entropy = [
+    Utilities.getUuid(),
+    Utilities.getUuid(),
+    Date.now(),
+    Session.getTemporaryActiveUserKey ? Session.getTemporaryActiveUserKey() : '',
+  ].join(':');
+  const macBytes = Utilities.computeHmacSha256Signature(entropy, Utilities.getUuid());
+  const secret = Utilities.base64EncodeWebSafe(macBytes).replace(/=/g, '').substring(0, 48);
   Config.set('TELEGRAM_WEBHOOK_SECRET', secret);
   Logger.log('TELEGRAM_WEBHOOK_SECRET generated. Length=' + secret.length);
   Logger.log('Next: setup_telegramWebhook() để register với Telegram.');

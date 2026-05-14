@@ -83,6 +83,19 @@ const TelegramAPI = (() => {
   }
 
   /**
+   * Sửa nội dung message đã gửi. Dùng để cập nhật "⏳ đang xử lý..." → kết quả
+   * thay vì gửi tiếp message mới, giữ thread chat gọn gàng.
+   */
+  function editMessageText(chatId, messageId, text, opts) {
+    return _call('editMessageText', Object.assign({
+      chat_id: chatId,
+      message_id: messageId,
+      text: String(text).substring(0, 4096),
+      parse_mode: 'HTML',
+    }, opts || {}));
+  }
+
+  /**
    * Nhận `message.photo` (array of PhotoSize) → tải Blob của bản size lớn nhất.
    */
   function downloadPhoto(photoArray) {
@@ -135,6 +148,7 @@ const TelegramAPI = (() => {
     sendDocumentBlob,
     answerCallback,
     editMessageReplyMarkup,
+    editMessageText,
     downloadPhoto,
     downloadFile,
     setWebhook,

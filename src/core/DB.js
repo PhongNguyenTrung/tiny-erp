@@ -78,7 +78,25 @@ const DB = (() => {
     }
 
     function findBy(field, value) {
-      return all().filter((r) => r[field] === value);
+      // Project chỉ cột filter trước → chỉ getValues full row cho hits.
+      // Tránh đọc N×W cells khi chỉ cần N×1 + (#hits)×W.
+      const sh = _sheet();
+      const last = sh.getLastRow();
+      if (last < 2) return [];
+      const header = _readHeader(sh);
+      const colIdx = header.indexOf(field);
+      if (colIdx < 0) throw new Error('Unknown column: ' + field);
+      const colVals = sh.getRange(2, colIdx + 1, last - 1, 1).getValues();
+      const hits = [];
+      for (let i = 0; i < colVals.length; i++) {
+        if (colVals[i][0] === value) hits.push(i);
+      }
+      if (hits.length === 0) return [];
+      // Đọc full row chỉ cho các index khớp. Với hits thưa thì rẻ hơn nhiều.
+      return hits.map((i) => {
+        const row = sh.getRange(i + 2, 1, 1, header.length).getValues()[0];
+        return _rowToObj(row, header);
+      });
     }
 
     function findOne(field, value) {
@@ -88,9 +106,13 @@ const DB = (() => {
       const header = _readHeader(sh);
       const colIdx = header.indexOf(field);
       if (colIdx < 0) throw new Error('Unknown column: ' + field);
-      const data = sh.getRange(2, 1, last - 1, header.length).getValues();
-      for (let i = 0; i < data.length; i++) {
-        if (data[i][colIdx] === value) return _rowToObj(data[i], header);
+      // Đọc chỉ cột cần filter trước. Nếu hit, fetch full row của hit đó.
+      const colVals = sh.getRange(2, colIdx + 1, last - 1, 1).getValues();
+      for (let i = 0; i < colVals.length; i++) {
+        if (colVals[i][0] === value) {
+          const row = sh.getRange(i + 2, 1, 1, header.length).getValues()[0];
+          return _rowToObj(row, header);
+        }
       }
       return null;
     }

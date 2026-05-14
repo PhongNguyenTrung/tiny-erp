@@ -21,13 +21,13 @@ const ProductCommands = (() => {
     switch (sub) {
       case 'add': return _add(ctx, rest);
       case 'find': return _find(ctx, rest);
-      case 'list': return _list(ctx);
+      case 'list': return _list(ctx, rest);
       default:
         ctx.reply(
           'Cú pháp:\n' +
           '/sp add SKU | Tên | ĐVT | Đơn giá | Category\n' +
           '/sp find <SKU hoặc tên>\n' +
-          '/sp list'
+          '/sp list [limit] [page]'
         );
     }
   }
@@ -53,10 +53,29 @@ const ProductCommands = (() => {
     ctx.reply(byName.map(_format).join('\n\n'));
   }
 
-  function _list(ctx) {
+  function _list(ctx, rest) {
+    // Cú pháp: `/sp list [limit] [page]` — đối xứng với `/khach list`.
+    const tokens = (rest || '').split(/\s+/).filter(Boolean);
+    const limit = Math.min(Math.max(parseInt(tokens[0], 10) || 20, 1), 50);
+    const page = Math.max(parseInt(tokens[1], 10) || 1, 1);
+
     const rows = Product.all();
-    if (rows.length === 0) return ctx.reply('Catalog rỗng. Dùng /sp add để thêm.');
-    ctx.reply(rows.map((p) => p.sku + ' — ' + p.name + ' (' + p.unit + ') @ ' + p.default_price).join('\n'));
+    const total = rows.length;
+    if (total === 0) return ctx.reply('Catalog rỗng. Dùng /sp add để thêm.');
+
+    const start = (page - 1) * limit;
+    const slice = rows.slice(start, start + limit);
+    if (slice.length === 0) {
+      const totalPages = Math.max(Math.ceil(total / limit), 1);
+      return ctx.reply('Trang ' + page + ' rỗng. Tối đa ' + totalPages + ' trang.');
+    }
+    const totalPages = Math.ceil(total / limit);
+    const header = 'Sản phẩm (trang ' + page + '/' + totalPages + ', tổng ' + total + '):';
+    const body = slice.map((p) => p.sku + ' — ' + p.name + ' (' + p.unit + ') @ ' + p.default_price).join('\n');
+    const footer = page < totalPages
+      ? '\nTrang sau: /sp list ' + limit + ' ' + (page + 1)
+      : '';
+    ctx.reply(header + '\n' + body + footer);
   }
 
   function _format(p) {

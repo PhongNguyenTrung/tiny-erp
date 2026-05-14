@@ -12,7 +12,7 @@
  *   2. Add `<Name>Commands.register()` vào `bootstrap()` bên dưới
  *   3. (Optional) update Config.js nếu module cần Script Properties mới
  *
- * Xem [ARCHITECTURE.md](../ARCHITECTURE.md) cho thiết kế chi tiết.
+ * Xem docs/architecture/overview.md cho thiết kế chi tiết.
  */
 
 let _bootstrapped = false;
@@ -44,8 +44,8 @@ function doPost(e) {
   // workaround: embed secret trong webhook URL ?token=…)
   const expectedSecret = Config.get('TELEGRAM_WEBHOOK_SECRET');
   if (expectedSecret) {
-    const provided = (e.parameter && e.parameter.token) || null;
-    if (provided !== expectedSecret) {
+    const provided = (e.parameter && e.parameter.token) || '';
+    if (!_constantTimeEquals(provided, expectedSecret)) {
       Log.info('webhook secret mismatch');
       return _ok({ error: 'unauthorized' });
     }
@@ -86,4 +86,14 @@ function _ok(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+// Length-then-XOR compare. Tránh leak độ dài chuỗi qua exit-early.
+function _constantTimeEquals(a, b) {
+  a = String(a);
+  b = String(b);
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
 }

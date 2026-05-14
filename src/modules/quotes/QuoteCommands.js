@@ -123,6 +123,7 @@ const QuoteCommands = (() => {
 
   function _extractAndConfirm(ctx, text) {
     Log.info('[quotes] extract textLen=' + (text || '').length + ' photos=' + (ctx.photo ? ctx.photo.length : 0));
+    // Gửi 1 message placeholder, sau đó edit in-place → tránh spam chat.
     try { ctx.reply('⏳ Em đang xử lý...'); } catch (_) {}
 
     const blobs = [];
@@ -133,7 +134,7 @@ const QuoteCommands = (() => {
     Log.info('[quotes] AI draft items=' + (draft.items ? draft.items.length : 0));
 
     if (!draft.items || draft.items.length === 0) {
-      ctx.reply('Đoạn này em chưa rõ, anh nhắn kỹ lại tên hạng mục, kích thước, đơn giá giúp em ạ.');
+      ctx.editLast('Đoạn này em chưa rõ, anh nhắn kỹ lại tên hạng mục, kích thước, đơn giá giúp em ạ.');
       return;
     }
 
@@ -149,16 +150,19 @@ const QuoteCommands = (() => {
       quoteId,
     });
 
-    // Auto-escape handles `<>&` in AI-generated content (parse_mode=HTML).
-    ctx.replyWithButtons(QuoteSheet.summarize(draft, filled.totals), [
-      [
-        { text: '✅ OK – Xuất PDF', callback_data: 'quote:confirm' },
-        { text: '✏️ Mở Sheet để sửa', url: filled.file.getUrl() },
+    // Edit message placeholder thành summary + buttons. Auto-escape handles
+    // `<>&` trong AI-generated content (parse_mode=HTML).
+    ctx.editLast(QuoteSheet.summarize(draft, filled.totals), {
+      buttons: [
+        [
+          { text: '✅ OK – Xuất PDF', callback_data: 'quote:confirm' },
+          { text: '✏️ Mở Sheet để sửa', url: filled.file.getUrl() },
+        ],
+        [
+          { text: '❌ Huỷ', callback_data: 'quote:cancel' },
+        ],
       ],
-      [
-        { text: '❌ Huỷ', callback_data: 'quote:cancel' },
-      ],
-    ]);
+    });
   }
 
   function _exportAndReply(ctx, session) {
@@ -177,12 +181,13 @@ const QuoteCommands = (() => {
         filename
       );
       const blob = pdf.file.getBlob().setName(filename + '.pdf');
+      try { ctx.editLast('✅ Đã xuất xong. File đang gửi cho anh...'); } catch (_) {}
       ctx.replyWithDocument(blob, '📄 Báo giá ' + (session.quoteId || ''));
       StateManager.clear(ctx.userId);
     } catch (err) {
       Log.error('[quotes] PDF export failed: ' + Log.safeErr(err));
       StateManager.patch(ctx.userId, { state: STATES.AWAITING_CONFIRM });
-      ctx.reply('❌ Lỗi xuất PDF. Anh có thể bấm lại OK để thử lại, hoặc gõ /huy để bỏ.');
+      ctx.editLast('❌ Lỗi xuất PDF. Anh có thể bấm lại OK để thử lại, hoặc gõ /huy để bỏ.');
     }
   }
 

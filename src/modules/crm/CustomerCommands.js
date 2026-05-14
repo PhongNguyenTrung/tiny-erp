@@ -58,10 +58,33 @@ const CustomerCommands = (() => {
   }
 
   function _list(ctx, rest) {
-    const n = parseInt(rest, 10) || 10;
-    const rows = Customer.all().slice(-n).reverse();
-    if (rows.length === 0) return ctx.reply('Chưa có khách hàng nào trong DB.');
-    ctx.reply(rows.map((c, i) => (i + 1) + '. ' + c.name + ' — ' + c.phone).join('\n'));
+    // Cú pháp: `/khach list [limit] [page]`
+    //   limit default 10, max 50 — giữ message dưới giới hạn Telegram 4096 ký tự.
+    //   page  default 1 (1-indexed); xem các trang sâu hơn bằng `/khach list 20 2`.
+    const tokens = (rest || '').split(/\s+/).filter(Boolean);
+    const limit = Math.min(Math.max(parseInt(tokens[0], 10) || 10, 1), 50);
+    const page = Math.max(parseInt(tokens[1], 10) || 1, 1);
+
+    const all = Customer.all();
+    const total = all.length;
+    if (total === 0) return ctx.reply('Chưa có khách hàng nào trong DB.');
+
+    // Newest first
+    const reversed = all.slice().reverse();
+    const start = (page - 1) * limit;
+    const slice = reversed.slice(start, start + limit);
+    if (slice.length === 0) {
+      const totalPages = Math.max(Math.ceil(total / limit), 1);
+      return ctx.reply('Trang ' + page + ' rỗng. Tối đa ' + totalPages + ' trang.');
+    }
+
+    const totalPages = Math.ceil(total / limit);
+    const header = 'Khách hàng (trang ' + page + '/' + totalPages + ', tổng ' + total + '):';
+    const body = slice.map((c, i) => (start + i + 1) + '. ' + c.name + ' — ' + c.phone).join('\n');
+    const footer = page < totalPages
+      ? '\nTrang sau: /khach list ' + limit + ' ' + (page + 1)
+      : '';
+    ctx.reply(header + '\n' + body + footer);
   }
 
   function _format(c) {
